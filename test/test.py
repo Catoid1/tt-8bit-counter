@@ -25,29 +25,33 @@ async def test_project(dut):
     await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
     await RisingEdge(dut.clk)
-    await Timer(1, units="ns")
+    await Timer(2, units="ns")
     dut._log.info("Reset released")
     
     # Test 1: Hold when enable is 0
-    dut.ui_in.value = 0b00
+    dut.ui_in.value = 0b00 
     await ClockCycles(dut.clk, 3)
     assert int(dut.uo_out.value) == 0, f"Counter should hold at 0, got {dut.uo_out.value}"
     
     # Test 2: Count when enable is 1 (ui[0] = 1)
+    await RisingEdge(dut.clk)
     dut.ui_in.value = 0b01
+    
     for expected_val in range(1, 10):
         await RisingEdge(dut.clk)
-        await Timer(1, units="ns")
+        await Timer(2, units="ns")  
         assert int(dut.uo_out.value) == expected_val, f"Expected {expected_val}, got {dut.uo_out.value}"
         
     # Test 3: Synchronous Reset (ui[1] = 1)
+    await RisingEdge(dut.clk)
     dut.ui_in.value = 0b11 
     await RisingEdge(dut.clk)
-    await Timer(1, units="ns")
+    await Timer(2, units="ns")
     assert int(dut.uo_out.value) == 0, f"Synchronous reset failed, got {dut.uo_out.value}"
     
     # Test 4: Disable and hold value
-    dut.ui_in.value = 0b00 
+    await RisingEdge(dut.clk)
+    dut.ui_in.value = 0b00  
     held_val = int(dut.uo_out.value)
     await ClockCycles(dut.clk, 3)
     assert int(dut.uo_out.value) == held_val, f"Counter should hold value {held_val}, got {dut.uo_out.value}"
